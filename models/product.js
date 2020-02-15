@@ -7,6 +7,8 @@ const p = path.join(
   "products.json"
 );
 
+//Reading the file where products are stored and getting back either a list of
+//products or an empty array if there was some error
 const getProductsFromFile = callback => {
   fs.readFile(p, (err, fileContent) => {
     if (err) {
@@ -15,6 +17,7 @@ const getProductsFromFile = callback => {
     callback(JSON.parse(fileContent));
   });
 };
+
 
 module.exports = class Product {
   constructor(title, imageUrl, description, price) {
@@ -25,6 +28,7 @@ module.exports = class Product {
   }
 
   save() {
+    this.id = Math.random().toString();
     getProductsFromFile(products => {
       products.push(this);
       fs.writeFile(p, JSON.stringify(products), err => {
@@ -35,5 +39,12 @@ module.exports = class Product {
 
   static fetchAll(callback) {
     getProductsFromFile(callback);
+  }
+
+  static findById(id, callback) {
+    getProductsFromFile(products => {
+      const product = products.find(p => p.id === id);
+      callback(product);
+    });
   }
 };
