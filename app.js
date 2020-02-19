@@ -4,6 +4,9 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const db = require("./utility/database");
+
+
 app.set("view engine", "ejs");
 app.set("views", "views");
 
