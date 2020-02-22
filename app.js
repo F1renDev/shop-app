@@ -4,8 +4,9 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const db = require("./utility/database");
-
+const sequelize = require("./utility/database");
+const Product = require("./models/product");
+const User = require("./models/user");
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -25,5 +26,18 @@ app.use(shopRoutes);
 //If none of the above matched the request - the 404 page is shown
 app.use(errorController.get404);
 
-//Starting the server
-app.listen(5000);
+//Establishing relations between models-----------
+
+//If a user is deleted the product is also gone
+Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
+User.hasMany(Product);
+
+//Looking at all models created by sequelize and creating tables for them
+sequelize
+  .sync({force:true})
+  .then(result => {
+    // console.log(result);
+    //Starting the server
+    app.listen(5000);
+  })
+  .catch(err => console.log(err));
