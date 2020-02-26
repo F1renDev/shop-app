@@ -10,13 +10,9 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, description, price } = req.body;
-  req.user
-    .createProduct({
-      title: title,
-      price: price,
-      imageUrl: imageUrl,
-      description: description
-    })
+  const product = new Product(title, price, description, imageUrl);
+  product
+    .save()
     .then(result => {
       console.log("Created product");
       res.redirect("/admin/products");
@@ -32,10 +28,8 @@ exports.getEditProduct = (req, res, next) => {
     res.redirect("/");
   }
   const prodId = req.params.productId;
-  req.user
-    .getProducts({ where: { id: prodId } })
-    .then(products => {
-      const product = products[0];
+  Product.findById(prodId)
+    .then(product => {
       if (!product) {
         return res.redirect("/");
       }
@@ -55,16 +49,19 @@ exports.postEditProduct = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedImageUrl = req.body.imageUrl;
   const updateDesc = req.body.description;
-  Product.findByPk(prodId)
-    .then(product => {
-      product.title = updatedTitle;
-      product.price = updatedPrice;
-      product.description = updateDesc;
-      product.imageUrl = updatedImageUrl;
-      //If the prodct doesn't exist - creates a new one
-      // Updates the existing product otherwise
-      return product.save();
-    })
+
+  const product = new Product(
+    updatedTitle,
+    updatedPrice,
+    updateDesc,
+    updatedImageUrl,
+    prodId
+  );
+
+  //If the prodct doesn't exist - creates a new one
+  // Updates the existing product otherwise
+  product
+    .save()
     .then(result => {
       console.log("UPDATED PRODUCT");
       res.redirect("/admin/products");
@@ -73,8 +70,7 @@ exports.postEditProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  req.user
-    .getProducts()
+  Product.fetchAll()
     .then(products => {
       res.render("admin/products", {
         prods: products,
@@ -87,12 +83,8 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByPk(prodId)
-    .then(product => {
-      return product.destroy();
-    })
-    .then(result => {
-      console.log("DELETED PRODUCT");
+  Product.deleteById(prodId)
+    .then(() => {
       res.redirect("/admin/products");
     })
     .catch(err => console.log(err));

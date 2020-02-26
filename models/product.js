@@ -1,28 +1,71 @@
-const { Sequelize } = require("sequelize");
+const mongodb = require("mongodb");
+const getDb = require("../utility/database").getDb;
 
-const sequelize = require("../utility/database");
-
-//Creating a model to be managed by sequelize
-const Product = sequelize.define("product", {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  title: Sequelize.STRING,
-  price: {
-    type: Sequelize.DOUBLE,
-    allowNull: false
-  },
-  imageUrl: {
-    type: Sequelize.STRING,
-    allowNull: false
-  },
-  description: {
-    type: Sequelize.STRING,
-    allowNull: false
+class Product {
+  constructor(title, price, description, imageUrl, id) {
+    this.title = title;
+    this.price = price;
+    this.description = description;
+    this.imageUrl = imageUrl;
+    this._id = id ? new mongodb.ObjectId(id) : null;
   }
-});
+
+  //Connecting to mongoDB and saving product
+  save() {
+    //Getting the connection
+    const db = getDb();
+    let dbOperation;
+    if (this._id) {
+      //Update the product
+      dbOperation = db
+        .collection("products")
+        .updateOne({ _id: this._id }, { $set: this });
+    } else {
+      //Create a product
+      dbOperation = db.collection("products").insertOne(this);
+    }
+    return dbOperation
+      .then(result => {
+        console.log(result);
+      })
+      .catch(err => console.log(err));
+  }
+
+  static fetchAll() {
+    const db = getDb();
+    return db
+      .collection("products")
+      .find()
+      .toArray()
+      .then(products => {
+        console.log(products);
+        return products;
+      })
+      .catch(err => console.log(err));
+  }
+
+  static findById(prodId) {
+    return db
+      .collection("products")
+      .find({ _id: new mongodb.ObjectId(prodId) })
+      .next()
+      .then(product => {
+        console.log(product);
+        return product;
+      })
+      .catch(err => console.log(err));
+  }
+
+  static deleteById(prodId) {
+    const db = getDb();
+    return db
+      .collection("products")
+      .deleteOne({ _id: new mongodb.ObjectId(prodId) })
+      .then(result => {
+        console.log("Deleted!");
+      })
+      .catch(err => console.log(err));
+  }
+}
 
 module.exports = Product;
