@@ -1,6 +1,10 @@
 const Product = require("../models/product");
 
 exports.getAddProduct = (req, res, next) => {
+  //If user is not logged in - redirecting to the login page
+  if (!req.session.isLoggedIn) {
+    return res.redirect("/");
+  }
   res.render("admin/edit-product", {
     pageTitle: "Add product",
     path: "/admin/add-product",
@@ -9,6 +13,7 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
+//Creating a product
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, description, price } = req.body;
   const product = new Product({
@@ -29,6 +34,7 @@ exports.postAddProduct = (req, res, next) => {
     });
 };
 
+//Editing a product with pre-populated fields
 exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) {
@@ -51,6 +57,7 @@ exports.getEditProduct = (req, res, next) => {
     .catch();
 };
 
+//Updating the edited product
 exports.postEditProduct = (req, res, next) => {
   const prodId = req.body.productId;
   const updatedTitle = req.body.title;
@@ -74,6 +81,7 @@ exports.postEditProduct = (req, res, next) => {
     .catch(err => console.log(err));
 };
 
+//Getting all the products
 exports.getProducts = (req, res, next) => {
   Product.find()
     .then(products => {
@@ -87,6 +95,7 @@ exports.getProducts = (req, res, next) => {
     .catch(err => console.log(err));
 };
 
+//Deleting product by id
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   Product.findByIdAndRemove(prodId)

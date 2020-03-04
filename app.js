@@ -6,8 +6,12 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDbStore = require("connect-mongodb-session")(session);
 
+const User = require("./models/user");
+
 const MONGODB_URI = `mongodb+srv://F1ren:qwe123@cluster0-lhqoo.mongodb.net/shop?retryWrites=true&w=majority`;
 
+//Setting the url and specifing the collection name for the sessions that will be
+//stored in mongoDB
 const store = new MongoDbStore({
   uri: MONGODB_URI,
   collection: "sessions"
@@ -15,11 +19,12 @@ const store = new MongoDbStore({
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+//Setting the templating engine to be 'ejs' and specifing the view folders for it
 app.set("view engine", "ejs");
 app.set("views", "views");
 
 //This enables the access to different kind of files statically (css, images, etc.)
-// from given folder
+//from given folder
 app.use(express.static(path.join(__dirname, "public")));
 
 const adminRoutes = require("./routes/admin");
@@ -27,8 +32,8 @@ const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
 const errorController = require("./controllers/error");
-const User = require("./models/user");
 
+//Defining how the sessions should be crated and updated and where to store them
 app.use(
   session({
     secret: "my secret",
@@ -38,6 +43,8 @@ app.use(
   })
 );
 
+//Do nothing if there is no active user session
+//or store the user in the request otherwise
 app.use((req, res, next) => {
   if (!req.session.user) {
     return next();
@@ -58,22 +65,10 @@ app.use(authRoutes);
 //If none of the above matched the request - the 404 page is shown
 app.use(errorController.get404);
 
+//Connecting to the mongoDB
 mongoose
   .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(result => {
-    User.findOne().then(user => {
-      if (!user) {
-        const user = new User({
-          name: "Test",
-          email: "test@test.com",
-          cart: {
-            items: []
-          }
-        });
-        console.log(user);
-        user.save();
-      }
-    });
     app.listen(5000);
   })
   .catch(err => console.log(err));
