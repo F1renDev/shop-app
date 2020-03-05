@@ -5,10 +5,13 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDbStore = require("connect-mongodb-session")(session);
+const csrf = require("csurf");
+const flash = require("connect-flash");
 
 const User = require("./models/user");
-
 const MONGODB_URI = `mongodb+srv://F1ren:qwe123@cluster0-lhqoo.mongodb.net/shop?retryWrites=true&w=majority`;
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 //Setting the url and specifing the collection name for the sessions that will be
 //stored in mongoDB
@@ -16,8 +19,6 @@ const store = new MongoDbStore({
   uri: MONGODB_URI,
   collection: "sessions"
 });
-
-app.use(bodyParser.urlencoded({ extended: true }));
 
 //Setting the templating engine to be 'ejs' and specifing the view folders for it
 app.set("view engine", "ejs");
@@ -43,6 +44,13 @@ app.use(
   })
 );
 
+//Protecting from the csrf attacks
+const csrfProtection = csrf();
+app.use(csrfProtection);
+
+//the request object will have the flash method => req.flash()
+app.use(flash())
+
 //Do nothing if there is no active user session
 //or store the user in the request otherwise
 app.use((req, res, next) => {
@@ -55,6 +63,13 @@ app.use((req, res, next) => {
       next();
     })
     .catch(err => console.log(err));
+});
+
+//Adding these data to every page that is rendered
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
 });
 
 //The handled requests that allow access to certain pages
