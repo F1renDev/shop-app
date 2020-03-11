@@ -49,7 +49,7 @@ const csrfProtection = csrf();
 app.use(csrfProtection);
 
 //the request object will have the flash method => req.flash()
-app.use(flash())
+app.use(flash());
 
 //Do nothing if there is no active user session
 //or store the user in the request otherwise
