@@ -81,7 +81,13 @@ exports.postLogin = (req, res, next) => {
           res.redirect("/login");
         });
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };
 
 exports.postLogout = (req, res, next) => {
@@ -143,5 +149,11 @@ exports.postSignup = (req, res, next) => {
     .then(result => {
       res.redirect("/login");
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };

@@ -24,7 +24,7 @@ exports.postAddProduct = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add product",
-      path: "/admin/edit-product",
+      path: "/admin/add-product",
       editing: false,
       hasError: true,
       product: {
@@ -51,7 +51,11 @@ exports.postAddProduct = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch(err => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
     });
 };
 
@@ -77,7 +81,13 @@ exports.getEditProduct = (req, res, next) => {
         validationErrors: []
       });
     })
-    .catch();
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };
 
 //Updating the edited product
@@ -124,7 +134,13 @@ exports.postEditProduct = (req, res, next) => {
         res.redirect("/admin/products");
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };
 
 //Getting all the products
@@ -137,7 +153,13 @@ exports.getProducts = (req, res, next) => {
         path: "/admin/products"
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };
 
 //Deleting product by id
@@ -149,5 +171,11 @@ exports.postDeleteProduct = (req, res, next) => {
     .then(() => {
       res.redirect("/admin/products");
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      //Returning next(error) call with an error passed to it makes it skip all following
+      //middlewares and move to the error handling middleware
+      return next(error);
+    });
 };

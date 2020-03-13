@@ -51,6 +51,13 @@ app.use(csrfProtection);
 //the request object will have the flash method => req.flash()
 app.use(flash());
 
+//Adding these data to every page that is rendered
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
 //Do nothing if there is no active user session
 //or store the user in the request otherwise
 app.use((req, res, next) => {
@@ -59,17 +66,16 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
     .then(user => {
+      if (!user) {
+        return next();
+      }
       req.user = user;
       next();
     })
-    .catch(err => console.log(err));
-});
-
-//Adding these data to every page that is rendered
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
-  next();
+    .catch(err => {
+      //This error will be thrown if there is some technical issue with the database
+      next(new Error(err));
+    });
 });
 
 //The handled requests that allow access to certain pages
@@ -77,8 +83,20 @@ app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorController.get500);
+
 //If none of the above matched the request - the 404 page is shown
 app.use(errorController.get404);
+
+//Error handling middleware that uses exactly 4 arguments
+app.use((error, req, res, next) => {
+  // res.redirect("/500");
+  res.status(500).render("500", {
+    pageTitle: "An Error Occured",
+    path: "/500",
+    isAuthenticated: req.session.isLoggedIn
+  });
+});
 
 //Connecting to the mongoDB
 mongoose
