@@ -15,7 +15,6 @@ router.post(
     check("title")
       .isString()
       .isLength({ min: 3 }),
-    check("imageUrl").isURL(),
     check("price").isFloat(),
     check("description").isLength({ min: 8, max: 200 })
   ],
@@ -33,7 +32,6 @@ router.post(
     check("title")
       .isString()
       .isLength({ min: 3 }),
-    check("imageUrl").isURL(),
     check("price").isFloat(),
     check("description").isLength({ min: 8, max: 200 })
   ],

@@ -7,11 +7,41 @@ const session = require("express-session");
 const MongoDbStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const User = require("./models/user");
 const MONGODB_URI = `mongodb+srv://F1ren:qwe123@cluster0-lhqoo.mongodb.net/shop?retryWrites=true&w=majority`;
 
+//Configuration for multer to describe how the uploaded files should be stored
+const fileStorage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    //The first argument is either an error to display it or implicit null
+    //to say that everything is ok and the file should be stored
+    callback(null, "images");
+  },
+  filename: (req, file, callback) => {
+    callback(null, new Date().getTime() + "-" + file.originalname);
+  }
+});
+
+//Filtering for different mimetypes (png, jpeg, jpg - ok)
+const fileFilter = (req, file, callback) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/jpg"
+  ) {
+    callback(null, true);
+  } else {
+    callback(null, false);
+  }
+};
+
 app.use(bodyParser.urlencoded({ extended: true }));
+//input filed name is 'image', so looking for a file with name image
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
 
 //Setting the url and specifing the collection name for the sessions that will be
 //stored in mongoDB
@@ -27,6 +57,7 @@ app.set("views", "views");
 //This enables the access to different kind of files statically (css, images, etc.)
 //from given folder
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/images',express.static(path.join(__dirname, "images")));
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
