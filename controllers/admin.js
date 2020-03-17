@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 
 const Product = require("../models/product");
+const fileHelper = require("../utility/file");
 
 exports.getAddProduct = (req, res, next) => {
   //If user is not logged in - redirecting to the login page
@@ -148,6 +149,8 @@ exports.postEditProduct = (req, res, next) => {
       product.price = updatedPrice;
       product.description = updateDesc;
       if (image) {
+        //Deleting the old file before replacing it with a new one
+        fileHelper.deleteFile(product.imageUrl);
         product.imageUrl = image.path;
       }
       return product.save().then(result => {
@@ -186,9 +189,18 @@ exports.getProducts = (req, res, next) => {
 //Deleting product by id
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  //If the creator of the product is not the currently logged in user
-  //he can't delete the product
-  Product.deleteOne({ _id: prodId, userId: req.user._id })
+  Product.findById(prodId)
+    .then(product => {
+      if (!product) {
+        return next(new Error("Product not found"));
+      }
+
+      //Deleting the old file before replacing it with a new one
+      fileHelper.deleteFile(product.imageUrl);
+      //If the creator of the product is not the currently logged in user
+      //he can't delete the product
+      return Product.deleteOne({ _id: prodId, userId: req.user._id });
+    })
     .then(() => {
       res.redirect("/admin/products");
     })
